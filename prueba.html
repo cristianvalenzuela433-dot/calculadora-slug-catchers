@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Volumen - Slug Catchers</title>
+    
+    <!-- Librerías necesarias -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Librería para capturar pantalla -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Estilos personalizados -->
+    <style>
+        /* --- Variables y Estilos Base --- */
+        :root {
+            --bg-light: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-dark: linear-gradient(135deg, #1a1c20 0%, #2d3436 100%);
+            --card-light: #ffffff;
+            --card-dark: #2c3e50;
+            --text-light: #2c3e50;
+            --text-dark: #ecf0f1;
+            --text-secondary-light: #7f8c8d;
+            --text-secondary-dark: #bdc3c7;
+            --accent-blue: #3498db;
+            --accent-green: #11998e;
+            --accent-amber: #f2994a;
+            --accent-red: #eb3349;
+            --border-light: #e0e0e0;
+            --border-dark: #34495e;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-light);
+            color: var(--text-light);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- Contenedor Principal (Responsive) --- */
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 10px auto;
+            }
+        }
+
+        /* --- Tarjetas (Responsive) --- */
+        .card {
+            background: var(--card-light);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-light);
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        @media (hover: none) {
+            .card:hover {
+                transform: none;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* --- Header (Responsive) --- */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 768px) {
+            .header {
+                margin-bottom: 25px;
+            }
+        }
+
+        .header h1 {
+            color: var(--text-light);
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .header p {
+            color: var(--text-secondary-light);
+            font-size: 1.2em;
+            margin-top: 5px;
+        }
+        @media (max-width: 768px) {
+            .header p {
+                font-size: 1em;
+            }
+        }
+
+        /* --- Inputs (Touch-Friendly) --- */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 2px solid var(--border-light);
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        @media (max-width: 768px) {
+            .input-group input {
+                padding: 15px;
+                font-size: 16px;
+            }
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        /* --- Resultados --- */
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent-blue);
+        }
+
+        .result p {
+            margin: 5px 0;
+            font-size: 1.1em;
+            color: var(--text-light);
+        }
+
+        .result strong {
+            color: var(--accent-blue);
+            font-size: 1.3em;
+        }
+
+        /* --- Cartel de Volumen Total (Responsive) --- */
+        .total-card {
+            background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+            color: white;
+            text-align: center;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(15, 32, 39, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        @media (max-width: 768px) {
+            .total-card {
+                padding: 25px 20px;
+            }
+        }
+
+        .total-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
+            animation: shimmer 4s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .total-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.8em;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        @media (max-width: 768px) {
+            .total-card h3 {
+                font-size: 1.5em;
+            }
+        }
+
+        .total-card .volume-display {
+            font-size: 3em;
+            font-weight: 800;
+            margin: 10px 0;
+            text-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        @media (max-width: 768px) {
+            .total-card .volume-display {
+                font-size: 2.5em;
+            }
+        }
+
+        .total-card .details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+        @media (max-width: 768px) {
+            .total-card .details {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            .total-card .details div {
+                width: 80%;
+            }
+        }
+
+        .total-card .details div {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- Barras de Progreso --- */
+        .progress-container {
+            width: 100%;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            height: 25px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            line-height: 25px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transition: width 0.6s ease, background-color 0.6s ease;
+            border-radius: 10px;
+        }
+        
+        /* --- Botones de Acción (Responsive y Touch-Friendly) --- */
+        .action-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        @media (max-width: 768px) {
+            .action-buttons {
+                top: 15px;
+                right: 15px;
+                gap: 15px;
+            }
+        }
+
+        .action-button {
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        @media (max-width: 768px) {
+            .action-button {
+                width: 56px;
+                height: 56px;
+                font-size: 1.8em;
+            }
+        }
+
+        .action-button:hover {
+            transform: scale(1.1);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- ESTILOS PARA EL REPORTE DE COMPARTIR (OCULTO) --- */
+        #shareable-content {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 400px;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            color: #2c3e50;
+        }
+        #shareable-content h2 {
+            text-align: center;
+            margin-top: 0;
+            color: #0F2027;
+            font-size: 1.5em;
+        }
+        #shareable-content p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+        #shareable-content strong {
+            color: #3498db;
+        }
+        #shareable-content hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 20px 0;
+        }
+
+        /* --- Estilos para Modo Oscuro (Responsive) --- */
+        body.dark-mode {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .card {
+            background: var(--card-dark);
+            border-color: var(--border-dark);
+        }
+
+        body.dark-mode .header h1 { color: var(--text-dark); }
+        body.dark-mode .header p { color: var(--text-secondary-dark); }
+        body.dark-mode .input-group label { color: var(--text-dark); }
+        body.dark-mode .input-group input { background-color: #34495e; color: var(--text-dark); border-color: var(--border-dark); }
+        body.dark-mode .result { background-color: #34495e; color: var(--text-dark); }
+        body.dark-mode .result strong { color: #5dade2; }
+        body.dark-mode .progress-container { background-color: #34495e; }
+        body.dark-mode .action-button { background: rgba(44, 62, 80, 0.5); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- DATOS DE LOS SLUG CATCHERS ---
+        const dataSlug1 = [
+            { altura: 0, volumen: 0 }, { altura: 0.1, volumen: 0.30 }, { altura: 0.2, volumen: 0.83 },
+            { altura: 0.3, volumen: 1.46 }, { altura: 0.4, volumen: 2.15 }, { altura: 0.5, volumen: 2.85 },
+            { altura: 0.6, volumen: 3.65 }, { altura: 0.7, volumen: 4.39 }, { altura: 0.8, volumen: 5.22 },
+            { altura: 0.9, volumen: 6.26 }, { altura: 1.27, volumen: 9.20 }, { altura: 1.8, volumen: 23.60 },
+            { altura: 2.7, volumen: 74.80 }, { altura: 3.6, volumen: 142.10 }
+        ];
+
+        const dataSlug2 = [
+            { altura: 0.0, volumen: 0 }, { altura: 0.1, volumen: 1 }, { altura: 0.2, volumen: 2 },
+            { altura: 0.3, volumen: 3 }, { altura: 0.4, volumen: 4 }, { altura: 0.5, volumen: 5 },
+            { altura: 0.6, volumen: 7 }, { altura: 0.7, volumen: 10 }, { altura: 0.8, volumen: 20 },
+            { altura: 0.9, volumen: 30 }, { altura: 1.0, volumen: 40 }, { altura: 1.1, volumen: 58 },
+            { altura: 1.2, volumen: 76 }, { altura: 1.3, volumen: 94 }, { altura: 1.4, volumen: 112 },
+            { altura: 1.5, volumen: 130 }, { altura: 1.6, volumen: 135 }, { altura: 1.7, volumen: 140 },
+            { altura: 1.8, volumen: 141 }, { altura: 1.9, volumen: 142 }, { altura: 2.0, volumen: 143 },
+            { altura: 2.1, volumen: 143.5 }, { altura: 2.2, volumen: 144 }, { altura: 2.3, volumen: 168 },
+            { altura: 2.4, volumen: 192 }, { altura: 2.5, volumen: 217 }, { altura: 2.6, volumen: 238 },
+            { altura: 2.7, volumen: 259 }, { altura: 2.8, volumen: 280 }, { altura: 2.9, volumen: 281 },
+            { altura: 3.0, volumen: 282 }, { altura: 3.1, volumen: 282 }, { altura: 3.2, volumen: 282 },
+            { altura: 3.3, volumen: 282 }, { altura: 3.4, volumen: 291 }, { altura: 3.5, volumen: 300 },
+            { altura: 3.6, volumen: 320 }, { altura: 3.7, volumen: 340 }, { altura: 3.8, volumen: 360 },
+            { altura: 3.9, volumen: 380 }, { altura: 4.0, volumen: 400 }, { altura: 4.1, volumen: 405 },
+            { altura: 4.2, volumen: 410 }, { altura: 4.3, volumen: 410 }, { altura: 4.4, volumen: 410 },
+            { altura: 4.5, volumen: 410 }
+        ];
+
+        // --- NUEVOS VALORES DE CAPACIDAD MÁXIMA (100%) ---
+        const CAPACIDAD_MAXIMA_SLUG1 = 130; // m³
+        const CAPACIDAD_MAXIMA_SLUG2 = 433; // m³
+        const capacidadMaximaTotal = CAPACIDAD_MAXIMA_SLUG1 + CAPACIDAD_MAXIMA_SLUG2;
+
+        // --- LÓGICA DE CÁLCULO ---
+        const calcularVolumen = (altura, data) => {
+            const alturaNum = parseFloat(altura);
+            if (isNaN(alturaNum) || alturaNum < 0) return null;
+            for (let i = 0; i < data.length - 1; i++) {
+                if (data[i].altura <= alturaNum && data[i + 1].altura >= alturaNum) {
+                    const p1 = data[i]; const p2 = data[i+1];
+                    const ratio = (alturaNum - p1.altura) / (p2.altura - p1.altura);
+                    return p1.volumen + ratio * (p2.volumen - p1.volumen);
+                }
+            }
+            return null;
+        };
+
+        // --- FUNCIÓN PARA COLOR DINÁMICO ---
+        const getProgressColor = (percentage) => {
+            if (percentage < 50) return 'linear-gradient(to right, #11998e, #38ef7d)';
+            if (percentage < 90) return 'linear-gradient(to right, #f2994a, #f2c94c)';
+            return 'linear-gradient(to right, #eb3349, #f45c43)';
+        };
+
+        // --- COMPONENTE PRINCIPAL ---
+        const App = () => {
+            const [altura1, setAltura1] = useState('');
+            const [altura2, setAltura2] = useState('');
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [isSharing, setIsSharing] = useState(false);
+
+            useEffect(() => {
+                document.body.className = isDarkMode ? 'dark-mode' : '';
+            }, [isDarkMode]);
+
+            const vol1 = calcularVolumen(altura1, dataSlug1);
+            const vol2 = calcularVolumen(altura2, dataSlug2);
+            const volTotal = (vol1 && vol2) ? vol1 + vol2 : null;
+            const porcTotal = volTotal ? (volTotal / capacidadMaximaTotal) * 100 : 0;
+            
+            const porc1 = vol1 ? (vol1 / CAPACIDAD_MAXIMA_SLUG1) * 100 : 0;
+            const porc2 = vol2 ? (vol2 / CAPACIDAD_MAXIMA_SLUG2) * 100 : 0;
+
+            // --- FUNCIÓN PARA COMPARTIR (TOTALMENTE REHECHA) ---
+            const handleShare = async () => {
+                if (!vol1 || !vol2 || !volTotal) {
+                    alert("Por favor, calcule los volúmenes de ambos Slug Catchers antes de compartir.");
+                    return;
+                }
+
+                setIsSharing(true);
+                
+                // 1. Obtener el elemento oculto y poblarlo con los valores
+                const shareableElement = document.getElementById('shareable-content');
+                shareableElement.innerHTML = `
+                    <h2>Reporte de Volúmenes</h2>
+                    <p>Planta de Procesamiento Tratayen</p>
+                    <hr>
+                    <p><strong>Slug Catcher 1:</strong> ${vol1.toFixed(2)} m³</p>
+                    <p><strong>Slug Catcher 2:</strong> ${vol2.toFixed(2)} m³</p>
+                    <p><strong>Volumen Total Ocupado:</strong> ${volTotal.toFixed(2)} m³</p>
+                `;
+                
+                try {
+                    // 2. Tomar la captura solo del elemento oculto
+                    const canvas = await html2canvas(shareableElement, {
+                        backgroundColor: '#ffffff',
+                        scale: 2
+                    });
+                    
+                    canvas.toBlob(async (blob) => {
+                        const file = new File([blob], "reporte-volumenes.png", { type: "image/png" });
+                        
+                        // 3. Preparar el texto para compartir (solo los valores)
+                        const shareData = {
+                            title: "Reporte de Volúmenes",
+                            text: `• Slug Catcher 1: ${vol1.toFixed(2)} m³\n• Slug Catcher 2: ${vol2.toFixed(2)} m³\n• Volumen Total: ${volTotal.toFixed(2)} m³`,
+                            files: [file]
+                        };
+
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share(shareData);
+                            } catch (err) {
+                                console.log("Error al compartir:", err);
+                                downloadImage(canvas);
+                            }
+                        } else {
+                            downloadImage(canvas);
+                        }
+                        setIsSharing(false);
+                    });
+                } catch (error) {
+                    console.error("Error al generar la captura de pantalla:", error);
+                    alert("No se pudo generar la imagen para compartir.");
+                    setIsSharing(false);
+                }
+            };
+
+            const downloadImage = (canvas) => {
+                const link = document.createElement('a');
+                link.download = 'reporte-volumenes.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            };
+
+            return (
+                <div className="container">
+                    {/* Elemento oculto para generar la imagen de compartir */}
+                    <div id="shareable-content"></div>
+
+                    <div className="action-buttons">
+                        <button className="action-button" onClick={handleShare} title="Compartir Valores">
+                            {isSharing ? (
+                                <span style={{animation: 'spin 1s linear infinite'}}>⏳</span>
+                            ) : (
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="18" cy="5" r="3"></circle>
+                                    <circle cx="6" cy="12" r="3"></circle>
+                                    <circle cx="18" cy="19" r="3"></circle>
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                </svg>
+                            )}
+                        </button>
+                        <button className="action-button" onClick={() => setIsDarkMode(!isDarkMode)} title={isDarkMode ? 'Cambiar a modo día' : 'Cambiar a modo noche'}>
+                            {isDarkMode ? '☀️' : '🌙'}
+                        </button>
+                    </div>
+
+                    <div className="header">
+                        <h1>🏭 Calculadora de Volumen</h1>
+                        <p>Planta de Procesamiento Tratayen</p>
+                    </div>
+
+                    <div className="card">
+                        <h3>🔵 Slug Catcher 1 (Cap. Max: {CAPACIDAD_MAXIMA_SLUG1} m³)</h3>
+                        <div className="input-group">
+                            <label>Altura de Regleta (m):</label>
+                            <input type="number" value={altura1} onChange={e => setAltura1(e.target.value)} placeholder="0 - 3.6 metros" />
+                        </div>
+                        {vol1 !== null && (
+                            <div className="result">
+                                <p>Volumen: <strong>{vol1.toFixed(2)} m³</strong></p>
+                                <div className="progress-container">
+                                    <div className="progress-bar" style={{width: `${porc1}%`, background: getProgressColor(porc1)}}>
+                                        {porc1.toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="card">
+                        <h3>🟢 Slug Catcher 2 (Cap. Max: {CAPACIDAD_MAXIMA_SLUG2} m³)</h3>
+                        <div className="input-group">
+                            <label>Altura de Regleta (m):</label>
+                            <input type="number" value={altura2} onChange={e => setAltura2(e.target.value)} placeholder="0 - 4.5 metros" />
+                        </div>
+                        {vol2 !== null && (
+                            <div className="result">
+                                <p>Volumen: <strong>{vol2.toFixed(2)} m³</strong></p>
+                                <div className="progress-container">
+                                    <div className="progress-bar" style={{width: `${porc2}%`, background: getProgressColor(porc2)}}>
+                                        {porc2.toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="total-card">
+                        <h3>🛢️ VOLUMEN TOTAL OCUPADO</h3>
+                        {volTotal !== null ? (
+                            <>
+                                <div className="volume-display">{volTotal.toFixed(2)} m³</div>
+                                <div className="progress-container">
+                                    <div className="progress-bar" style={{width: `${porcTotal}%`, background: getProgressColor(porcTotal)}}>
+                                        {porcTotal.toFixed(1)}%
+                                    </div>
+                                </div>
+                                <div className="details">
+                                    <div>Slug 1: {vol1.toFixed(2)} m³</div>
+                                    <div>Slug 2: {vol2.toFixed(2)} m³</div>
+                                </div>
+                            </>
+                        ) : (
+                            <p>Calcule ambos para ver el total</p>
+                        )}
+                        <p style={{fontSize: '0.9em', marginTop: '15px'}}>Capacidad Máxima: {capacidadMaximaTotal.toFixed(2)} m³</p>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
